@@ -36,7 +36,9 @@ public class JsonParser {
             String key = current.getValue();
             skipColon();
             res.put(key, parserElement());
-            skipComma();
+            if (skipCommaOrObjectEnd()){
+                return res;
+            }
             current = jsonTokenReader.next();
         }
         return res;
@@ -68,7 +70,9 @@ public class JsonParser {
 
         while (!c.getType().equals(TokenType.ARRAY_END)) {
             jsonArray.add(parserElement());
-            skipComma();
+            if (skipCommaOrArrayEnd()) {
+                return jsonArray;
+            }
             c = jsonTokenReader.next();
         }
         return jsonArray;
@@ -82,10 +86,27 @@ public class JsonParser {
         }
     }
 
-    private void skipComma() {
+    private Boolean skipCommaOrArrayEnd() {
         Token c = jsonTokenReader.next();
-        if (!c.getType().equals(TokenType.COMMA)) {
-            expected(",", c.getValue());
+        if (c.getType().equals(TokenType.ARRAY_END)) {
+            return true;
+        } else if (c.getType().equals(TokenType.COMMA)) {
+            return false;
+        } else {
+            expected(", or ]", c.getValue());
+            return null;
+        }
+    }
+
+    private Boolean skipCommaOrObjectEnd() {
+        Token c = jsonTokenReader.next();
+        if (c.getType().equals(TokenType.OBJECT_END)) {
+            return true;
+        } else if (c.getType().equals(TokenType.COMMA)) {
+            return false;
+        } else {
+            expected(", or ]", c.getValue());
+            return null;
         }
     }
 
